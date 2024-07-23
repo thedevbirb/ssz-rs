@@ -16,7 +16,7 @@ use crate::{
 #[derive(PartialOrd, Ord, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize), serde(transparent))]
 pub struct List<T: Serializable, const N: usize> {
-    data: Vec<T>,
+    pub data: Vec<T>,
 }
 
 impl<T: Serializable, const N: usize> AsRef<[T]> for List<T, N> {
@@ -153,7 +153,7 @@ where
 {
     fn serialize(&self, buffer: &mut Vec<u8>) -> Result<usize, SerializeError> {
         if self.len() > N {
-            return Err(InstanceError::Bounded { bound: N, provided: self.len() }.into())
+            return Err(InstanceError::Bounded { bound: N, provided: self.len() }.into());
         }
         let mut serializer = Serializer::default();
         for element in &self.data {
@@ -176,13 +176,13 @@ where
                     // SAFETY: checked subtraction is unnecessary, as encoding.len() > remainder;
                     // qed
                     expected: encoding.len() - remainder,
-                })
+                });
             }
         }
 
         let result = deserialize_homogeneous_composite(encoding)?;
         if result.len() > N {
-            return Err(InstanceError::Bounded { bound: N, provided: result.len() }.into())
+            return Err(InstanceError::Bounded { bound: N, provided: result.len() }.into());
         }
         let result = result.try_into().map_err(|(_, err)| match err {
             Error::Instance(err) => DeserializeError::InvalidInstance(err),
@@ -251,13 +251,13 @@ where
             match next {
                 PathElement::Index(i) => {
                     if *i >= N {
-                        return Err(MerkleizationError::InvalidPathElement(next.clone()))
+                        return Err(MerkleizationError::InvalidPathElement(next.clone()));
                     }
                     let chunk_position = i * T::item_length() / 32;
-                    let child = parent *
-                        2 *
-                        get_power_of_two_ceil(<Self as GeneralizedIndexable>::chunk_count()) +
-                        chunk_position;
+                    let child = parent
+                        * 2
+                        * get_power_of_two_ceil(<Self as GeneralizedIndexable>::chunk_count())
+                        + chunk_position;
                     T::compute_generalized_index(child, rest)
                 }
                 PathElement::Length => {
